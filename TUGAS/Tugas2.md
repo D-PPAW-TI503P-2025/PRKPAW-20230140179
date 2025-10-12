@@ -6,7 +6,7 @@ Menambahkan data buku baru ke server dengan metode POST melalui Postman.
 
 2. Update
 Mengupdate data buku yang sudah ada di server menggunakan metode PUT di Postman. 
-![Update](ss/Put.png)
+![Update](ss/Update.png)
 
 3. Delete
 Menghapus data buku dari server menggunakan metode DELETE di Postman.
