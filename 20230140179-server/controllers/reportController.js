@@ -1,37 +1,46 @@
 // controllers/reportController.js
 
 // 1. Impor Model Presensi dan Operator Sequelize
-const { Presensi, Sequelize } = require("../models");
-const { Op } = Sequelize;
+const { Presensi } = require("../models");
+const { Op } = require("sequelize");
 
-// 2. Ubah fungsi menjadi async untuk menunggu query database
+
+// 2. Implementasi getDailyReport dengan filter Nama dan Rentang Tanggal
 exports.getDailyReport = async (req, res) => {
-  try {
-    // Tentukan rentang waktu untuk "hari ini" (dari jam 00:00 sampai besok jam 00:00)
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+  try {
+    // Ambil query parameters: nama, tanggalMulai, dan tanggalSelesai [cite: 110, 131]
+    const { nama, tanggalMulai, tanggalSelesai } = req.query; 
+    let options = { where: {} };
 
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    // Filter berdasarkan Nama (jika ada) [cite: 112]
+    if (nama) {
+      options.where.nama = {
+        [Op.like]: `%${nama}%`, // Mencari nama yang mengandung string tertentu [cite: 114]
+      };
+    }
+    
+    // Filter berdasarkan Rentang Tanggal (Tugas Modul) 
+    if (tanggalMulai && tanggalSelesai) {
+        // Asumsi memfilter berdasarkan waktu dibuatnya record ('createdAt').
+        // Perlu dipastikan format tanggal yang dikirim dari query parameters
+        // sudah sesuai dengan format database.
+        options.where.createdAt = {
+            [Op.between]: [tanggalMulai, tanggalSelesai], // Menggunakan [Op.between] untuk rentang tanggal 
+        };
+    }
 
-    // 3. Lakukan query ke database untuk mencari data hari ini
-    const records = await Presensi.findAll({
-      where: {
-        checkIn: {
-          [Op.between]: [today, tomorrow], // Cari 'checkIn' di antara dua waktu ini
-        },
-      },
-      attributes: ['userId', 'nama', 'checkIn', 'checkOut'] // Ambil kolom yang relevan saja
-    });
+    // Lakukan query ke database
+    const records = await Presensi.findAll(options); // Mengambil semua data dengan opsi filter [cite: 117]
 
-    // 4. Kirim data yang ditemukan dari database sebagai respons
-    res.status(200).json({
-      reportDate: today.toLocaleDateString('id-ID'), // Format tanggal hari ini
-      data: records, // 'records' adalah hasil dari query database
-    });
-
-  } catch (error) {
-    // Jika terjadi error saat query, kirim pesan error
-    res.status(500).json({ message: "Terjadi kesalahan pada server", error: error.message });
-  }
+    // Kirimkan respon berhasil
+    res.json({
+      reportDate: new Date().toLocaleDateString(),
+      data: records,
+    });
+  } catch (error) {
+    // Kirimkan respon error server
+    res
+      .status(500)
+      .json({ message: "Gagal mengambil laporan", error: error.message });
+  }
 };
