@@ -19,10 +19,14 @@ const bookRoutes = require('./routes/books');
 const presensiRoutes = require("./routes/presensi"); 
 const reportRoutes = require("./routes/reports");   
 
+const authRoutes = require('./routes/auth'); // <-- Impor rute auth
+
 // Daftarkan semua router
 app.use('/api/books', bookRoutes);
 app.use("/api/presensi", presensiRoutes); 
 app.use("/api/reports", reportRoutes); 
+
+app.use('/api/auth', authRoutes); // <-- Daftarkan rute /api/auth
 
 // Middleware 404 (Not Found) 
 app.use((req, res, next) => {
