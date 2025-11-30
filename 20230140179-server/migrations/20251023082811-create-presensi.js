@@ -9,14 +9,16 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      userId: {
-        type: Sequelize.INTEGER,
-        allowNull: false
+      userId: { 
+      type: Sequelize.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'Users', 
+        key: 'id'
       },
-      nama: {
-        type: Sequelize.STRING,
-        allowNull: false
-      },
+      onUpdate: 'CASCADE',
+      onDelete: 'CASCADE'
+    },
       checkIn: {
         allowNull: false,
         type: Sequelize.DATE
@@ -32,7 +34,15 @@ module.exports = {
       updatedAt: {
         allowNull: false,
         type: Sequelize.DATE
-      }
+      },
+      latitude: {
+        type: Sequelize.DECIMAL(10, 7),
+        allowNull: false,
+      },
+      longitude: {
+        type: Sequelize.DECIMAL(10, 7),
+        allowNull: false,
+      },
     });
   },
   async down(queryInterface, Sequelize) {

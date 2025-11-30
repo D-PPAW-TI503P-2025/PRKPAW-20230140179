@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const presensiController = require('../controllers/presensicontroller');
-const { addUserData } = require('../middleware/permissionMiddleware');
+const presensiController = require('../controllers/presensiController');
+const { authenticateToken } = require('../middleware/permissionMiddleware');
 const { body, validationResult } = require('express-validator');
 
 
@@ -32,7 +32,7 @@ const validatePresensiUpdate = [
     }
 ];
 
-router.use(addUserData);
+router.use(authenticateToken);
 router.post('/check-in', presensiController.CheckIn);
 router.post('/check-out', presensiController.CheckOut);
 router.put('/:id', validatePresensiUpdate, presensiController.updatePresensi);

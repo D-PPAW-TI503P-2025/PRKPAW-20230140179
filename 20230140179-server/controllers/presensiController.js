@@ -8,6 +8,7 @@ exports.CheckIn = async (req, res) => {
  	  try {
  	    const { id: userId, nama: userName } = req.user;
  	    const waktuSekarang = new Date();
+		const { latitude, longitude } = req.body
  	
  	    // 3. Ubah cara mencari data menggunakan 'findOne' dari Sequelize
  	    const existingRecord = await Presensi.findOne({
@@ -23,8 +24,9 @@ exports.CheckIn = async (req, res) => {
  	    // 4. Ubah cara membuat data baru menggunakan 'create' dari Sequelize
  	    const newRecord = await Presensi.create({
  	      userId: userId,
- 	      nama: userName,
  	      checkIn: waktuSekarang,
+		  latitude: latitude || null,
+		  longitude: longitude || null,
  	    });
  	    
  	    const formattedData = {
@@ -70,7 +72,6 @@ exports.CheckOut = async (req, res) => {
  	
  	    const formattedData = {
  	        userId: recordToUpdate.userId,
- 	        nama: recordToUpdate.nama,
  	        checkIn: format(recordToUpdate.checkIn, "yyyy-MM-dd HH:mm:ssXXX", { timeZone }),
  	        checkOut: format(recordToUpdate.checkOut, "yyyy-MM-dd HH:mm:ssXXX", { timeZone }),
  	    };
@@ -116,8 +117,8 @@ exports.deletePresensi = async (req, res) => {
 exports.updatePresensi = async (req, res) => {
   try {
     const presensiId = req.params.id;
-    const { checkIn, checkOut, nama } = req.body;
-    if (checkIn === undefined && checkOut === undefined && nama === undefined) {
+	const { checkIn, checkOut } = req.body;
+    if (checkIn === undefined && checkOut === undefined) {
       return res.status(400).json({
         message:
           "Request body tidak berisi data yang valid untuk diupdate (checkIn, checkOut, atau nama).",
@@ -132,7 +133,6 @@ exports.updatePresensi = async (req, res) => {
 
     recordToUpdate.checkIn = checkIn || recordToUpdate.checkIn;
     recordToUpdate.checkOut = checkOut || recordToUpdate.checkOut;
-    recordToUpdate.nama = nama || recordToUpdate.nama;
     await recordToUpdate.save();
 
     res.json({
