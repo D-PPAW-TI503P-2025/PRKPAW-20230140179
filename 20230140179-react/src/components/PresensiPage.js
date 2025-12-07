@@ -1,10 +1,13 @@
 // src/components/PresensiPage.js
-import React, { useState, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import axios from "axios";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import icon from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
+import Webcam from 'react-webcam';
+
+
 
 L.Marker.prototype.options.icon = L.icon({
   iconUrl: icon,
@@ -23,6 +26,13 @@ function AttendancePage() {
 
   const [coords, setCoords] = useState(null); // {lat, lng}
   const [isLoading, setIsLoading] = useState(true);
+
+  const [image, setImage] = useState(null); 
+ 	  const webcamRef = useRef(null); 
+ 	  const capture = useCallback(() => {
+ 	    const imageSrc = webcamRef.current.getScreenshot();
+ 	    setImage(imageSrc); 
+ 	  }, [webcamRef]);
 
   const getToken = () => {
     return localStorage.getItem("token");
@@ -54,8 +64,8 @@ function AttendancePage() {
   }, []);
 
   const handleCheckIn = async () => {
-    if (!coords) {
-      setError("Lokasi belum didapatkan. Mohon izinkan akses lokasi.");
+    if (!coords || !image) {
+      setError("Lokasi dan Foto wajib ada!");
       return;
     }
     try {
@@ -64,16 +74,24 @@ function AttendancePage() {
           Authorization: `Bearer ${getToken()}`,
         },
       };
+      
+      
+      const blob = await (await fetch(image)).blob();
+// 3. Buat FormData (untuk mengirim file) [cite: 36, 128]
+      const formData = new FormData();
+      formData.append('latitude', coords.lat);
+      formData.append('longitude', coords.lng);
+      formData.append('image', blob, 'selfie.jpg'); // Key 'image' harus cocok dengan Multer di Backend [cite: 130-132]
 
-      // --- PERBAIKAN DI SINI (Ganti 'attendance' jadi 'presensi') ---
-      const response = await axios.post(
-        "http://localhost:3001/api/presensi/check-in",
-        {
-          latitude: coords.lat,
-          longitude: coords.lng,
-        },
-        config
-      );
+      // 4. Kirim FormData melalui Axios POST [cite: 37, 133-137]
+      const response = await axios.post(
+        'http://localhost:3001/api/presensi/check-in',
+        formData, // ✅ MENGIRIM FormData
+        { 
+           // Tidak perlu objek config terpisah, cukup langsung di headers:
+           headers: { Authorization: `Bearer ${getToken()}` } 
+        }
+      );
       // -------------------------------------------------------------
 
       setMessage(response.data.message);
@@ -141,6 +159,32 @@ function AttendancePage() {
         <h2 className="text-3xl font-bold mb-6 text-gray-800">
           Lakukan Presensi
         </h2>
+
+         	      <div className="my-4 border rounded-lg overflow-hidden bg-black">
+ 	        {image ? (
+ 	          <img src={image} alt="Selfie" className="w-full" />
+ 	        ) : (
+ 	          <Webcam
+ 	            audio={false}
+ 	            ref={webcamRef}
+ 	            screenshotFormat="image/jpeg"
+ 	            className="w-full"
+ 	          />
+ 	        )}
+ 	      </div>
+ 	
+ 	      <div className="mb-4">
+ 	        {!image ? (
+ 	          <button onClick={capture} className="bg-blue-500 text-white px-4 py-2 rounded w-full">
+ 	            Ambil Foto 📸
+ 	          </button>
+ 	        ) : (
+ 	          <button onClick={() => setImage(null)} className="bg-gray-500 text-white px-4 py-2 rounded w-full">
+ 	            Foto Ulang 🔄
+ 	          </button>
+ 	        )}
+ 	      </div>
+
 
         {message && <p className="text-green-600 mb-4">{message}</p>}
         {error && <p className="text-red-600 mb-4">{error}</p>}

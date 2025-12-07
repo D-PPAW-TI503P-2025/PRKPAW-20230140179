@@ -1,14 +1,63 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+
+// URL Dasar Server untuk mengakses file statis dari folder 'uploads'
+const BASE_URL = "http://localhost:3001/"; 
+
+// --- KOMPONEN MODAL (Popup Gambar) ---
+const PhotoModal = ({ isOpen, onClose, photoUrl }) => {
+  if (!isOpen) return null;
+
+  return (
+    // Backdrop
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
+      onClick={onClose} // Tutup modal saat klik di luar gambar
+    >
+      <div 
+        className="max-w-4xl max-h-4xl p-4 bg-white rounded-lg shadow-xl"
+        onClick={(e) => e.stopPropagation()} // Cegah penutupan saat klik di dalam modal
+      >
+        <img 
+          src={photoUrl} 
+          alt="Bukti Presensi Ukuran Penuh" 
+          className="max-w-full max-h-[80vh] object-contain"
+        />
+        <button 
+          onClick={onClose} 
+          className="mt-4 w-full py-2 bg-red-500 text-white rounded hover:bg-red-600"
+        >
+          Tutup
+        </button>
+      </div>
+    </div>
+  );
+};
+// -------------------------------------
 
 function ReportPage() {
   const [reports, setReports] = useState([]);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
+  
+  // State baru untuk Modal Foto
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentPhotoUrl, setCurrentPhotoUrl] = useState('');
 
-  const fetchReports = async (query) => {
+  const handleShowModal = (url) => {
+    setCurrentPhotoUrl(url);
+    setIsModalOpen(true);
+  };
+  
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setCurrentPhotoUrl('');
+  };
+
+  // Menggunakan useCallback untuk menstabilkan fetchReports
+  const fetchReports = useCallback(async (query) => {
     const token = localStorage.getItem("token");
     if (!token) {
       navigate("/login");
@@ -34,11 +83,13 @@ function ReportPage() {
         err.response ? err.response.data.message : "Gagal mengambil data"
       );
     }
-  };
+  }, [navigate]); 
 
+  // Memperbaiki dependency array: menggunakan fetchReports dan navigate
   useEffect(() => {
     fetchReports("");
-  }, [navigate]);
+  }, [navigate, fetchReports]); 
+  
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     fetchReports(searchTerm);
@@ -71,7 +122,7 @@ function ReportPage() {
       )}
 
       {!error && (
-        <div className="bg-white shadow-md rounded-lg overflow-hidden">
+        <div className="bg-white shadow-md rounded-lg overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -89,6 +140,10 @@ function ReportPage() {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Longitude
+                </th>
+                {/* TAMBAHKAN KOLOM BUKTI FOTO */}
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Bukti Foto
                 </th>
               </tr>
             </thead>
@@ -117,12 +172,26 @@ function ReportPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {presensi.longitude || "N/A"}
                     </td>
+                    {/* IMPLEMENTASI TAMPILAN BUKTI FOTO */}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {presensi.buktiFoto ? (
+                        <img
+                          // Menggunakan BASE_URL + path dari database (misal: uploads/1-123.jpg)
+                          src={`${BASE_URL}${presensi.buktiFoto}`}
+                          alt="Bukti Selfie"
+                          className="w-12 h-12 object-cover rounded-md cursor-pointer hover:opacity-80 transition"
+                          onClick={() => handleShowModal(`${BASE_URL}${presensi.buktiFoto}`)}
+                        />
+                      ) : (
+                        <span>-</span>
+                      )}
+                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
                   <td
-                    colSpan="3"
+                    colSpan="6" // Mengubah colSpan menjadi 6 untuk mencakup kolom baru
                     className="px-6 py-4 text-center text-gray-500"
                   >
                     Tidak ada data yang ditemukan.
@@ -133,6 +202,13 @@ function ReportPage() {
           </table>
         </div>
       )}
+      
+      {/* Komponen Modal untuk Gambar Ukuran Penuh */}
+      <PhotoModal 
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        photoUrl={currentPhotoUrl}
+      />
     </div>
   );
 }
