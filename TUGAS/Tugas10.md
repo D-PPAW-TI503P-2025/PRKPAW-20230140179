@@ -1,5 +1,6 @@
 PresensiPage yg menampilkan kamera
 ![alt text](ss/Tugas10-1.png)
+![alt text](ss/Tugas10-6.png)
 
 Kolom baru "Bukti Foto" di tabel reportpage
 ![alt text](ss/Tugas10-4.png)
