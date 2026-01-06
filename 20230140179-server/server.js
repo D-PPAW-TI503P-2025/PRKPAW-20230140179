@@ -4,7 +4,7 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan'); 
 const app = express();
-const path = require('path'); // <-- PERUBAHAN 1: Impor modul path
+const path = require('path'); 
 const PORT = 3001;
 
 // Middleware
@@ -12,7 +12,6 @@ app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
 
-// --- PERUBAHAN 2: Konfigurasi Folder Statis ---
 // Agar foto yang diunggah bisa dilihat di frontend (misal: <img src="/uploads/foto.jpg" />),
 // kita perlu mengkonfigurasi Express untuk melayani folder tersebut secara statis.
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -51,3 +50,6 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`Express server running at http://localhost:${PORT}/`);
 });
+
+const iotRoutes = require("./routes/iot");
+app.use("/api/iot", iotRoutes);

@@ -7,6 +7,7 @@ import AttendancePage from "./components/PresensiPage";
 import ReportPage from "./components/ReportsPage";
 import Navbar from "./components/Navbar";
 import "leaflet/dist/leaflet.css";
+import SensorPage from "./components/SensorPage";
 
 const MainLayout = ({ children }) => {
   return (
@@ -45,6 +46,14 @@ function App() {
             element={
               <MainLayout>
                 <ReportPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/monitoring"
+            element={
+              <MainLayout>
+                <SensorPage />
               </MainLayout>
             }
           />

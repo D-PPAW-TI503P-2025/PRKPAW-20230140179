@@ -1,9 +1,9 @@
-// src/components/Navbar.jsx   ← taruh di sini
+// src/components/Navbar.jsx
 
 import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
-import { Menu, X, LogOut } from "lucide-react";
+import { Menu, X, LogOut, Activity } from "lucide-react"; // Menambah icon Activity (opsional)
 
 function Navbar() {
   const navigate = useNavigate();
@@ -30,7 +30,6 @@ function Navbar() {
 
   const isActive = (path) => location.pathname === path;
 
-  // Warna aktif KONSISTEN untuk semua menu
   const activeClass = "bg-blue-100 text-blue-700 font-semibold shadow-sm";
   const inactiveClass = "text-gray-600 hover:bg-gray-50 hover:text-gray-900";
 
@@ -70,6 +69,15 @@ function Navbar() {
               Presensi
             </Link>
 
+            <Link
+              to="/monitoring"
+              className={`px-6 py-2.5 rounded-full font-medium transition-all ${
+                isActive("/monitoring") ? activeClass : inactiveClass
+              }`}
+            >
+              Monitoring Sensor
+            </Link>
+
             {user.role === "admin" && (
               <Link
                 to="/reports"
@@ -89,13 +97,10 @@ function Navbar() {
                 {user.nama.charAt(0).toUpperCase()}
               </div>
               <div>
-                <p className="text-sm font-semibold text-gray-800">
-                  {user.nama}
-                </p>
+                <p className="text-sm font-semibold text-gray-800">{user.nama}</p>
                 <p className="text-xs text-gray-500 capitalize">{user.role}</p>
               </div>
             </div>
-
             <button
               onClick={handleLogout}
               className="flex items-center space-x-2 bg-red-500 hover:bg-red-600 text-white px-5 py-2.5 rounded-full font-medium transition-all shadow-md"
@@ -119,16 +124,6 @@ function Navbar() {
       {mobileMenuOpen && (
         <div className="md:hidden bg-white border-t border-gray-200">
           <div className="px-4 py-5 space-y-3">
-            <div className="flex items-center space-x-3 pb-4 border-b border-gray-200">
-              <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xl">
-                {user.nama.charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <p className="font-semibold text-gray-800">{user.nama}</p>
-                <p className="text-sm text-gray-500 capitalize">{user.role}</p>
-              </div>
-            </div>
-
             <Link
               to="/dashboard"
               onClick={() => setMobileMenuOpen(false)}
@@ -147,6 +142,17 @@ function Navbar() {
             >
               Presensi
             </Link>
+
+            <Link
+              to="/monitoring"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`block px-6 py-3 rounded-full font-medium ${
+                isActive("/monitoring") ? activeClass : "text-gray-700"
+              }`}
+            >
+              Monitoring Sensor
+            </Link>
+
             {user.role === "admin" && (
               <Link
                 to="/reports"
