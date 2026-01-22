@@ -12,7 +12,6 @@ import {
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 
-// Registrasi komponen Chart.js
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -28,14 +27,16 @@ function SensorPage() {
     labels: [],
     datasets: [],
   });
+  
+  // ✅ UPDATE: Menambahkan state untuk motion
   const [latest, setLatest] = useState({
     suhu: 0,
     lembab: 0,
     cahaya: 0,
+    motion: 0, 
   });
   const [loading, setLoading] = useState(true);
 
-  // Ambil data dari backend
   const fetchData = async () => {
     try {
       const response = await axios.get('http://localhost:3001/api/iot/history');
@@ -60,6 +61,7 @@ function SensorPage() {
           suhu: last.suhu,
           lembab: last.kelembaban,
           cahaya: last.cahaya,
+          motion: last.motion, // ✅ Ambil data motion terakhir
         });
       }
 
@@ -100,16 +102,18 @@ function SensorPage() {
     }
   };
 
-  // Auto refresh tiap 5 detik
   useEffect(() => {
     fetchData();
     const interval = setInterval(fetchData, 5000);
     return () => clearInterval(interval);
   }, []);
 
-  // Opsi grafik (multi-axis)
   const options = {
     responsive: true,
+    interaction: {
+      mode: 'index',
+      intersect: false,
+    },
     plugins: {
       legend: { position: 'top' },
       title: {
@@ -120,20 +124,12 @@ function SensorPage() {
     scales: {
       y: {
         position: 'left',
-        title: {
-          display: true,
-          text: 'Suhu / Kelembaban',
-        },
+        title: { display: true, text: 'Suhu / Kelembaban' },
       },
       y1: {
         position: 'right',
-        title: {
-          display: true,
-          text: 'Cahaya (LDR)',
-        },
-        grid: {
-          drawOnChartArea: false,
-        },
+        title: { display: true, text: 'Cahaya (LDR)' },
+        grid: { drawOnChartArea: false },
       },
     },
   };
@@ -143,25 +139,41 @@ function SensorPage() {
       <h1 className="text-3xl font-bold text-gray-800 mb-6">Dashboard IoT</h1>
 
       {/* ===== CARD INDIKATOR ===== */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-red-500 text-white p-4 rounded-lg shadow">
-          <h3 className="text-lg font-semibold">Suhu Terakhir</h3>
-          <p className="text-2xl font-bold">{latest.suhu} °C</p>
+      {/* Grid diubah jadi 4 kolom untuk menampung Motion */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        
+        {/* Card Suhu */}
+        <div className="bg-white p-4 rounded-lg shadow border-l-4 border-red-500">
+          <h3 className="text-gray-500 text-sm font-medium">Suhu</h3>
+          <p className="text-2xl font-bold text-gray-800">{latest.suhu} °C</p>
         </div>
-        <div className="bg-blue-500 text-white p-4 rounded-lg shadow">
-          <h3 className="text-lg font-semibold">Kelembaban Terakhir</h3>
-          <p className="text-2xl font-bold">{latest.lembab} %</p>
+
+        {/* Card Kelembaban */}
+        <div className="bg-white p-4 rounded-lg shadow border-l-4 border-blue-500">
+          <h3 className="text-gray-500 text-sm font-medium">Kelembaban</h3>
+          <p className="text-2xl font-bold text-gray-800">{latest.lembab} %</p>
         </div>
-        <div className="bg-yellow-400 text-black p-4 rounded-lg shadow">
-          <h3 className="text-lg font-semibold">Cahaya Terakhir</h3>
-          <p className="text-2xl font-bold">{latest.cahaya}</p>
+
+        {/* Card Cahaya */}
+        <div className="bg-white p-4 rounded-lg shadow border-l-4 border-yellow-400">
+          <h3 className="text-gray-500 text-sm font-medium">Cahaya</h3>
+          <p className="text-2xl font-bold text-gray-800">{latest.cahaya}</p>
         </div>
+
+        {/* ✅ CARD BARU: MOTION DETECTOR */}
+        <div className={`p-4 rounded-lg shadow border-l-4 transition-colors duration-300 ${latest.motion ? 'bg-red-50 border-red-600' : 'bg-green-50 border-green-500'}`}>
+          <h3 className="text-gray-600 text-sm font-medium">Status Gerakan</h3>
+          <p className={`text-2xl font-bold ${latest.motion ? 'text-red-600' : 'text-green-600'}`}>
+            {latest.motion ? '⚠️ ADA GERAKAN' : '✅ AMAN'}
+          </p>
+        </div>
+
       </div>
 
       {/* ===== GRAFIK ===== */}
       <div className="bg-white p-6 rounded-lg shadow-lg">
         {loading ? (
-          <p className="text-center">Memuat data...</p>
+          <p className="text-center text-gray-500">Sedang memuat data...</p>
         ) : (
           <Line options={options} data={chartData} />
         )}
